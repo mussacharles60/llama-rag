@@ -10,8 +10,9 @@ import {
 } from 'llamaindex';
 
 import { config } from 'dotenv';
-import fs from 'node:fs/promises';
 import path from 'node:path';
+
+// import fs from 'node:fs/promises';
 
 config({ path: path.join(__dirname, '/.env') });
 
