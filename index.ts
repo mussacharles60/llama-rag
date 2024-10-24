@@ -15,14 +15,22 @@ import moment from 'moment';
 import path from 'node:path';
 import readline from 'readline';
 
+const stopAnim = TextUtil.animateLoading(
+  `${TextUtil.logTxt('MYS:', 'info')} ${TextUtil.logTxt(
+    'Initializing ...',
+    'info'
+  )}`
+);
+
 config({ path: path.join(__dirname, '/.env') });
 
 const llm = new Ollama({
   model: 'llama3.2',
+  keepAlive: '30m',
   options: {
     temperature: 0.1,
   },
-});
+} as any);
 const embedModel = new HuggingFaceEmbedding({
   modelType: 'BAAI/bge-small-en-v1.5',
   quantized: false,
@@ -30,6 +38,13 @@ const embedModel = new HuggingFaceEmbedding({
 
 Settings.llm = llm;
 Settings.embedModel = embedModel;
+
+// llm.chat({
+//   messages: [{
+//     content: 'dude!',
+//     role: 'user'
+//   }]
+// })
 
 //
 const serviceContext = serviceContextFromDefaults({
@@ -78,14 +93,12 @@ const askLLM = async (prompt: string, queryEngine: RetrieverQueryEngine) => {
   );
   const response = await queryEngine.query({
     query: {
-      query: prompt,
+      query: final_prompt,
     },
     stream: true,
   });
   stopAnim();
-  // Logcat.info(
-  //   `${TextUtil.logTxt('MYS:', 'info')} ${TextUtil.txt(' >> ', ['fgGreen'])}`
-  // );
+  process.stdout.write(`${TextUtil.logTxt('MYS:', 'info')} `);
   for await (const message of response) {
     let output = message.delta;
     if (output.includes('[currentDate]')) {
@@ -99,7 +112,7 @@ const askLLM = async (prompt: string, queryEngine: RetrieverQueryEngine) => {
 
 const getPrompt = async () => {
   let prompt = await question(
-    `${TextUtil.logTxt('MYS:', 'info')} ${TextUtil.txt('>> ', ['fgGreen'])}`
+    `${TextUtil.logTxt('USR:', 'info')} ${TextUtil.txt('>> ', ['fgGreen'])}`
   );
   if (prompt) {
     prompt = prompt.trim();
@@ -146,14 +159,18 @@ async function main() {
   });
   stopAnim();
 
-  // Query the index
   stopAnim = TextUtil.animateLoading(
     `${TextUtil.logTxt('MYS:', 'info')} ${TextUtil.logTxt(
       'Querying the index ...',
       'info'
     )}`
   );
-  const queryEngine = index.asQueryEngine();
+  // get retriever
+  const retriever = index.asRetriever();
+  // Query the index
+  const queryEngine = index.asQueryEngine({
+    retriever,
+  });
   stopAnim();
 
   // async function chatWithContext(query: string) {
@@ -180,6 +197,8 @@ const loop = async (queryEngine: RetrieverQueryEngine) => {
   // loop
   await loop(queryEngine);
 };
+
+stopAnim();
 
 main().catch((error) => {
   Logcat.error(error);
