@@ -23,13 +23,13 @@ const stopAnim = TextUtil.animateLoading(
 );
 
 config({ path: path.join(__dirname, '.env') });
-console.log('host: ' + process.env.OLLAMA_LAN_HOST);
-console.log('model: ' + process.env.OLLAMA_LAN_MODEL);
+console.log('host: ' + process.env.OLLAMA_HOST);
+console.log('model: ' + process.env.OLLAMA_MODEL);
 const llm = new Ollama({
-  model: process.env.OLLAMA_LAN_MODEL || '',
+  model: process.env.OLLAMA_MODEL || '',
   keepAlive: '30m',
   config: {
-    host: process.env.OLLAMA_LAN_HOST || '',
+    host: process.env.OLLAMA_HOST || '',
   },
   options: {
     temperature: 0.1,
